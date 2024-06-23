@@ -1,4 +1,4 @@
 package com.example.transfer.transfer.model;
 
-public record Transfer (String idClient, double Value, Account account) {
+public record Transfer (String idClient, double value, Account account) {
 }
