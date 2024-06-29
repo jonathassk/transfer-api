@@ -1,31 +1,62 @@
 package com.example.transfer.controller;
 
-import com.example.transfer.transfer.model.Transfer;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
+import com.example.transfer.exceptions.TransferException;
+import com.example.transfer.service.TransferService;
+import com.example.transfer.model.Transfer;
+import com.example.transfer.model.TransferResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Objects;
+import java.util.HashMap;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @RestController
+@RequestMapping(value = "/", produces = "application/json")
+@Tag(name = "Transfer", description = "API de transferências")
 public class TransferController {
 
-    @PostMapping("/transferencia")
-    @Transactional
-    public String transfer(String idClient, double value, String idOrigin, String idDestination, HttpServletResponse response) {
-        verifyEmptyOrNullFields(idClient, value, idOrigin, idDestination);
+    private final TransferService transferService;
 
-        return ResponseEntity.status(201).body(idClient).toString();
+    public TransferController(TransferService transferService) {
+        this.transferService = transferService;
     }
 
-    private void verifyEmptyOrNullFields(String idClient, double value, String idOrigin, String idDestination) {
-        if (Stream.of(idClient, idOrigin, idDestination).anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("All fields must be filled");
+
+    @Operation(summary = "Realiza a transferência entre contas", method = "POST")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Transferência realizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Erro na requisição"),
+            @ApiResponse(responseCode = "404", description = "Conta não encontrada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    @PostMapping("transferencia")
+    public ResponseEntity<?> transfer(@Valid @RequestBody Transfer body, BindingResult bindingResult) {
+        Optional<HashMap<String, String>> errors = validateFields(bindingResult);
+        if (errors.isPresent()) return ResponseEntity.badRequest().body(errors);
+        try {
+            TransferResponse idCliente = transferService.transfer(body);
+        } catch (TransferException e) {
+            return ResponseEntity.status(e.getStatus()).body(e.getMessage());
         }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body("idCliente");
+    }
+    private Optional<HashMap<String, String>> validateFields(BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            HashMap<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return Optional.of(errors);
+        }
+        return Optional.empty();
     }
 }

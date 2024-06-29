@@ -1,8 +1,9 @@
 package com.example.transfer.service;
 
-import com.example.transfer.transfer.model.Account;
+import com.example.transfer.model.Transfer;
+import com.example.transfer.model.TransferResponse;
 
 public interface TransferService {
-    String transfer(String idClient, double value, String idOrigin, String idDestination);
+    TransferResponse transfer(Transfer body);
 
 }
