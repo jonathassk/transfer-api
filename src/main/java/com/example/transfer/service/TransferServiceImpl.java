@@ -2,11 +2,15 @@ package com.example.transfer.service;
 
 import com.example.transfer.exceptions.TransferException;
 import com.example.transfer.feign.TransferenciaClient;
+import com.example.transfer.model.ClienteResponse;
 import com.example.transfer.model.ContaResponse;
 import com.example.transfer.model.Transfer;
 import com.example.transfer.model.TransferResponse;
+import feign.Response;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,22 +22,27 @@ import java.util.UUID;
 public class TransferServiceImpl implements TransferService{
 
     private final TransferenciaClient transferenciaClient;
-    private final CircuitBreaker circuitBreaker;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
+    private final RetryRegistry retryRegistry;
 
     private final Logger logger = org.slf4j.LoggerFactory.getLogger(TransferServiceImpl.class);
 
-    public TransferServiceImpl(TransferenciaClient transferenciaClient, CircuitBreakerRegistry circuitBreakerRegistry) {
+    public TransferServiceImpl(TransferenciaClient transferenciaClient, CircuitBreakerRegistry circuitBreakerRegistry, RetryRegistry retryRegistry) {
         this.transferenciaClient = transferenciaClient;
-        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("transferService");
-
+        this.circuitBreakerRegistry = circuitBreakerRegistry;
+        this.retryRegistry = retryRegistry;
     }
+
 
     @Override
     public TransferResponse transfer(Transfer body) {
         try {
+            CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("transferenciaClient");
+            Retry retry = retryRegistry.retry("enviarNotificacao", "default");
+
             logger.info("Iniciando transferência");
             logger.info("id do cliente {}: ", body.idCliente());
-            validarTransferencia(body);
+            validarTransferencia(body, circuitBreaker, retry);
             logger.info("Transferência validada");
             UUID id = UUID.randomUUID();
 
@@ -48,15 +57,14 @@ public class TransferServiceImpl implements TransferService{
         }
     }
 
-    private void validarTransferencia(Transfer body) throws Throwable {
+    private void validarTransferencia(Transfer body, CircuitBreaker circuitBreaker, Retry retry) throws Throwable {
         if (body.conta().idDestino().equals(body.conta().idOrigem())) throw new TransferException("Conta de origem e destino não podem ser iguais", HttpStatus.BAD_REQUEST);
         if (body.valor() <= 0) throw new TransferException("Valor da transferência deve ser maior que zero", HttpStatus.BAD_REQUEST);
 
         // Verifica se o cliente existe, caso nao exista a exceção é lançada pelo ErrorDecoder que esta na pasta do feign
         logger.info("Buscando cliente e conta de origem");
-        transferenciaClient.getClientById(body.idCliente());
-        ResponseEntity<ContaResponse> conta = CircuitBreaker.decorateCheckedSupplier(circuitBreaker, () -> transferenciaClient.getContaByIdOrigem(body.conta().idOrigem())).apply();
-
+        CircuitBreaker.decorateCheckedSupplier(circuitBreaker, () -> transferenciaClient.getClientById(body.idCliente())).get();
+        ResponseEntity<ContaResponse> conta = CircuitBreaker.decorateCheckedSupplier(circuitBreaker, () -> transferenciaClient.getContaByIdOrigem(body.conta().idOrigem())).get();
         validarContaOrigem(conta.getBody(), body.valor());
     }
 

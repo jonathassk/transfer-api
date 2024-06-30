@@ -1,6 +1,7 @@
 package com.example.transfer.feign;
 
 import com.example.transfer.config.FeignConfig;
+import com.example.transfer.model.ClienteResponse;
 import com.example.transfer.model.ContaResponse;
 import com.example.transfer.model.Transfer;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 public interface TransferenciaClient {
 
     @GetMapping("/clientes/{id}")
-    void getClientById(@PathVariable("id") String id);
+    ResponseEntity<ClienteResponse> getClientById(@PathVariable("id") String id);
 
     @GetMapping("/contas/{id}")
     ResponseEntity<ContaResponse> getContaByIdOrigem(@PathVariable("id") String id);
