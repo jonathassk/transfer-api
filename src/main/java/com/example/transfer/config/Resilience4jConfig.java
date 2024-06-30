@@ -16,4 +16,6 @@ public class Resilience4jConfig {
     public RetryRegistry retryRegistry() {
         return RetryRegistry.ofDefaults();
     }
+
+
 }

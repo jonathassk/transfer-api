@@ -1,8 +1,8 @@
 package com.example.transfer.feign;
 
 import com.example.transfer.config.FeignConfig;
-import com.example.transfer.model.BacenResponse;
 import com.example.transfer.model.ContaResponse;
+import com.example.transfer.model.Transfer;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +19,10 @@ public interface TransferenciaClient {
     ResponseEntity<ContaResponse> getContaByIdOrigem(@PathVariable("id") String id);
 
     @PostMapping("/notificacoes")
-    ResponseEntity<BacenResponse> enviarNotificacao();
+    ResponseEntity<Void> enviarNotificacao(Transfer transfer);
+
+    @PostMapping("/contas/saldos")
+    ResponseEntity<Void> atualizarSaldo(Transfer transfer);
 
 
 

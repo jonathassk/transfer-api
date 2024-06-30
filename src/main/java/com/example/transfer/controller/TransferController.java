@@ -43,11 +43,12 @@ public class TransferController {
         if (errors.isPresent()) return ResponseEntity.badRequest().body(errors);
         try {
             TransferResponse idCliente = transferService.transfer(body);
+            return ResponseEntity.status(HttpStatus.CREATED).body(idCliente.message());
         } catch (TransferException e) {
             return ResponseEntity.status(e.getStatus()).body(e.getMessage());
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("idCliente");
+
     }
     private Optional<HashMap<String, String>> validateFields(BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
