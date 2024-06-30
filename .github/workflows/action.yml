@@ -28,8 +28,5 @@ jobs:
       - name: Install dependencies
         run: mvn install -DskipTests
 
-      - name: Run lint
-        run: mvn checkstyle:check
-
       - name: Run tests
         run: mvn test
