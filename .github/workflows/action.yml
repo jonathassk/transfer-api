@@ -29,4 +29,10 @@ jobs:
         run: mvn install -DskipTests
 
       - name: Run tests
-        run: mvn test
+        run: mvn test -e -X
+
+      - name: Archive test reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-reports
+          path: target/surefire-reports
