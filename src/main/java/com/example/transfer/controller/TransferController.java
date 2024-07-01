@@ -5,6 +5,8 @@ import com.example.transfer.service.TransferService;
 import com.example.transfer.model.Transfer;
 import com.example.transfer.model.TransferResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,10 +34,18 @@ public class TransferController {
 
     @Operation(summary = "Realiza a transferência entre contas", method = "POST")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Transferência realizada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Erro na requisição"),
-            @ApiResponse(responseCode = "404", description = "Conta não encontrada"),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            @ApiResponse(responseCode = "201", description = "Transferência realizada com sucesso", content = @Content(examples = {
+                    @ExampleObject(value = "{\"id_transferencia\": \"ID\"}")
+            })),
+            @ApiResponse(responseCode = "400", description = "Erro na requisição", content = @Content(examples = {
+                    @ExampleObject(value = "{\"field\": \"message\"}")
+            })),
+            @ApiResponse(responseCode = "404", description = "Conta não encontrada", content = @Content(examples = {
+                    @ExampleObject(value = "Conta não encontrada")
+            })),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor", content = @Content(examples = {
+                    @ExampleObject(value = "Erro interno no servidor")
+            })),
     })
     @PostMapping("transferencia")
     public ResponseEntity<?> transfer(@Valid @RequestBody Transfer body, BindingResult bindingResult) {
