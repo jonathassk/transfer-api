@@ -26,7 +26,7 @@ para fazer a instalação da aplicação, voce pode usar o DOCKER, tem um docker
 ## .ENV
 para a criação do .env, use as seguintes variaveis 
 ```
-DB_URL=jdbc:postgresql://endereco:5432/dbname
+DB_URL=jdbc:postgresql://endereco:5433/dbname
 DB_USER=username
 DB_PASSWORD=password
 SPRING_JPA_HIBERNATE_DDL_AUTO=update
