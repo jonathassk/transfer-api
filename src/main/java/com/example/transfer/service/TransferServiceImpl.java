@@ -1,11 +1,14 @@
 package com.example.transfer.service;
 
+import com.example.transfer.enums.Status;
 import com.example.transfer.exceptions.TransferException;
 import com.example.transfer.feign.TransferenciaClient;
 import com.example.transfer.model.ClienteResponse;
 import com.example.transfer.model.ContaResponse;
 import com.example.transfer.model.Transfer;
 import com.example.transfer.model.TransferResponse;
+import com.example.transfer.model.dto.TransferDTO;
+import com.example.transfer.repository.TransferRepository;
 import feign.Response;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -24,13 +27,15 @@ public class TransferServiceImpl implements TransferService{
     private final TransferenciaClient transferenciaClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
+    private final TransferRepository transferRepository;
 
     private final Logger logger = org.slf4j.LoggerFactory.getLogger(TransferServiceImpl.class);
 
-    public TransferServiceImpl(TransferenciaClient transferenciaClient, CircuitBreakerRegistry circuitBreakerRegistry, RetryRegistry retryRegistry) {
+    public TransferServiceImpl(TransferenciaClient transferenciaClient, CircuitBreakerRegistry circuitBreakerRegistry, RetryRegistry retryRegistry, TransferRepository transferRepository) {
         this.transferenciaClient = transferenciaClient;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.retryRegistry = retryRegistry;
+        this.transferRepository = transferRepository;
     }
 
 
@@ -46,8 +51,10 @@ public class TransferServiceImpl implements TransferService{
             logger.info("Transferência validada");
             UUID id = UUID.randomUUID();
 
-            transferenciaClient.enviarNotificacao(body);
+            ResponseEntity<Void> notificResult = transferenciaClient.enviarNotificacao(body);
 
+            // enviando ao bacen e verificando se a notificação foi enviada com sucesso
+            validarContaDestino(body);
 
             return new TransferResponse(HttpStatus.CREATED, id.toString());
         } catch (TransferException e) {
@@ -74,5 +81,17 @@ public class TransferServiceImpl implements TransferService{
         if (!conta.ativo()) throw new TransferException("Conta de origem não se encontra ativa", HttpStatus.BAD_REQUEST);
         if (conta.limiteDiario() < valor) throw new TransferException("Valor da transferência maior que o limite diário", HttpStatus.BAD_REQUEST);
         if (conta.saldo() < valor) throw new TransferException("Saldo insuficiente", HttpStatus.BAD_REQUEST);
+    }
+
+    private void validarContaDestino(Transfer body) {
+        logger.info("Validação conta destino");
+        ResponseEntity<Void> notificResult = transferenciaClient.enviarNotificacao(body);
+        if (notificResult.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+            logger.info("Erro ao enviar ao bacen, too many requests, id: {}", body.idCliente());
+            transferRepository.save(new TransferDTO(body.idCliente(), Status.BACEN_ERROR, body.valor()));
+        } else {
+            logger.info("Transferência realizada com sucesso, id: {}", body.idCliente());
+            transferRepository.save(new TransferDTO(body.idCliente(), Status.SUCCESS, body.valor()));
+        }
     }
 }
