@@ -1,6 +1,16 @@
-version: "3.9"
-
 services:
+  app:
+    build: .
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/appdb
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres:14.1
     restart: always
@@ -10,4 +20,3 @@ services:
       POSTGRES_DB: appdb
     ports:
       - "5432:5432"
-

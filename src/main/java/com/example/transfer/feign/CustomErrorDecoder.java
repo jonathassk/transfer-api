@@ -13,6 +13,8 @@ public class CustomErrorDecoder implements ErrorDecoder {
             switch (methodKey) {
                 case "TransferenciaClient#getClientById(String)":
                     return new ResourceNotFoundException("Conta nao encontrada!");
+                case "TransferenciaClient#getContaByIdOrigem(String)":
+                    return new ResourceNotFoundException("Conta de origem nao encontrada!");
                 default:
                     return new ResourceNotFoundException("Resource not found: " + methodKey);
             }
