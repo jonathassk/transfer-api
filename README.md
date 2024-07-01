@@ -13,10 +13,36 @@ Em uma possivel melhora de projeto, eu faria as seguintes alterações
 {img 2}
 
 ### testes 
+A aplicação conta com alguns testes unitarios, por questão de tempo (so tive o fim de semana para executar a tarefa) so cobri o service.
 
 ### Configuração e Instalação
+para fazer a instalação da aplicação, voce pode usar o DOCKER, tem um dockerfile configurado, para executar ele dessa forma voce deve executar os seguintes comandos 
+```
+1 - mvn clean package
+2 - docker-compose build
+3 - docker-compose up
+```
+
+## .ENV
+para a criação do .env, use as seguintes variaveis 
+```
+DB_URL=jdbc:postgresql://endereco:5432/dbname
+DB_USER=username
+DB_PASSWORD=password
+SPRING_JPA_HIBERNATE_DDL_AUTO=update
+SPRING_JPA_SHOW_SQL=true
+SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+```
 
 ### documentação api 
+a documentação do api pode ser vista no endereço quando a aplicação estiver rodando: [SWAGGER](http://localhost:8080/swagger-ui/index.html#/)
 
-### docker 
-É possivel utilizar o docker-compose encontrado na raiz do sistema para fazer a configuração dos serviços necessarios para o bom funcionamento da aplicação.
+### proposta de design
+*sistema na versao atual*
+
+![image](https://github.com/jonathassk/transfer-api/assets/35012537/52762d56-e10b-4159-bdd3-364bb08b50db)
+
+*Sistema completo com melhorias na disponibilidade, confiabilidade e robustez*
+
+![image](https://github.com/jonathassk/transfer-api/assets/35012537/cf217736-fc85-4daf-a99d-981125ce05f8)
+
